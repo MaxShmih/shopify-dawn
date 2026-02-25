@@ -1,0 +1,86 @@
+{% comment %}
+  Секція: до 3 товарів з колекції "all", тільки available.
+  Бейдж Sale при compare_at_price > price.
+  Add to cart через AJAX — відкривається cart drawer (потрібен <product-form>).
+{% endcomment %}
+
+{% assign collection_handle = 'all' %}
+{% assign all_products = collections[collection_handle].products %}
+{% assign available_products = all_products | where: 'available', true %}
+{% assign products_to_show = available_products | limit: 3 %}
+
+{% if products_to_show.size > 0 %}
+  <div class="product-available page-width">
+    <h2 class="product-available__title">{{ section.settings.heading | default: 'Available Products' }}</h2>
+
+    <ul class="product-available__grid" role="list">
+      {% for product in products_to_show %}
+        <li class="product-available__item">
+          <a href="{{ product.url }}" class="product-available__link">
+            {% if product.featured_image %}
+              {{ product.featured_image | image_url: width: 300 | image_tag: loading: 'lazy', widths: '150,300', class: 'product-available__image' }}
+            {% endif %}
+            <span class="product-available__title-text">{{ product.title }}</span>
+            <span class="product-available__price">
+              {{ product.price | money }}
+              {% if product.compare_at_price > product.price %}
+                <span class="product-available__compare-price">{{ product.compare_at_price | money }}</span>
+              {% endif %}
+            </span>
+          </a>
+
+          {% if product.compare_at_price > product.price %}
+            <span class="product-available__badge badge badge--sale" aria-hidden="true">Sale</span>
+          {% endif %}
+
+          {% comment %} product-form — custom element з theme: перехоплює submit, робить fetch /cart/add, оновлює drawer {% endcomment %}
+          {% assign product_form_id = 'product-form-' | append: section.id | append: '-' | append: product.id %}
+          <product-form class="product-form" data-section-id="{{ section.id }}">
+            <div class="product-form__error-message-wrapper" role="alert" hidden>
+              <span class="product-form__error-message"></span>
+            </div>
+            {% form 'product', product, id: product_form_id, class: 'form', novalidate: 'novalidate', data-type: 'add-to-cart-form' %}
+              <input
+                type="hidden"
+                name="id"
+                value="{{ product.selected_or_first_available_variant.id }}"
+                {% if product.selected_or_first_available_variant.available == false %}disabled{% endif %}
+              >
+              <button
+                type="submit"
+                name="add"
+                class="product-form__submit button button--primary"
+                {% if product.selected_or_first_available_variant.available == false %}disabled{% endif %}
+              >
+                <span>{{ 'products.product.add_to_cart' | t }}</span>
+                {% render 'loading-spinner' %}
+              </button>
+            {% endform %}
+          </product-form>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Custom Products",
+  "tag": "section",
+  "class": "section-product-available",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Available Products"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Custom Products",
+      "category": "Products"
+    }
+  ]
+}
+{% endschema %}

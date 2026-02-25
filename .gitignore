@@ -1,0 +1,23 @@
+# Shopify / env
+config.yml
+.env
+.env.*
+!.env.example
+
+# Node (якщо буде theme check, npm-скрипти тощо)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Опційно: не комітити дані з Theme Editor (щоб не перезаписати налаштування з іншого магазину)
+# config/settings_data.json
