@@ -1,0 +1,219 @@
+<script src="{{ 'product-form.js' | asset_url }}" defer></script>
+<style>
+  .collection-tab {
+    padding: 20px;
+    background-color: #f9f9f9;
+  }
+  .collection-tab__title {
+    margin-top: 0;
+    margin-bottom: 1rem;
+  }
+  /* Контейнер: flex, щоб кнопки зібрати в ряд, панелі — під ними */
+  .collection-tab__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  /* Кнопка табу — завжди в першому ряду */
+  .collection-tab__item {
+    order: 0;
+  }
+  /* Прихований radio (тільки для перемикання) */
+  .collection-tab__input.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+  /* Видима "кнопка" — це label */
+  .collection-tab__label {
+    display: block;
+    padding: 10px 20px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    margin-right: 4px;
+    margin-bottom: 0;
+  }
+  .collection-tab__label:hover {
+    background-color: #eee;
+  }
+  /* Коли цей таб вибраний — підсвітити кнопку */
+  .collection-tab__item:has(.collection-tab__input:checked) .collection-tab__label {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+  }
+  /* Панель: на повну ширину, під кнопками */
+  .collection-tab__panel {
+    display: none;
+    order: 1;
+    width: 100%;
+    flex-basis: 100%;
+    padding: 1.5rem 0;
+    border-top: 1px solid #ddd;
+  }
+  /* Показати тільки панель, що йде одразу після вибраного табу */
+  .collection-tab__item:has(.collection-tab__input:checked) + .collection-tab__panel {
+    display: block;
+  }
+  /* Сітка товарів у панелі */
+  .collection-tab__panel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .collection-tab__product {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+  }
+  .collection-tab__product-image {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+  .collection-tab__product-title {
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+  .collection-tab__product-price {
+    font-weight: 600;
+    margin-top: 0.25rem;
+  }
+  .collection-tab__view-all {
+    margin-top: 0.5rem;
+  }
+  .collection-tab__empty {
+    margin: 0;
+    opacity: 0.8;
+  }
+</style>
+
+<section class="collection-tab page-width">
+  {% if section.settings.tab_title != blank %}
+    <h2 class="collection-tab__title">{{ section.settings.tab_title }}</h2>
+  {% endif %}
+
+  {% if section.blocks.size > 0 %}
+    <div class="collection-tab__tabs">
+      {% for block in section.blocks %}
+        {% assign collection = block.settings.collection %}
+        {% if collection != blank %}
+          {% comment %} 1. Кнопка табу: прихований radio + видимий label {% endcomment %}
+          <div class="collection-tab__item">
+            <input
+              type="radio"
+              name="collection-tab-{{ section.id }}"
+              id="tab-{{ section.id }}-{{ block.id }}"
+              class="collection-tab__input visually-hidden"
+              {% if forloop.first %}
+                checked
+              {% endif %}
+            >
+            <label for="tab-{{ section.id }}-{{ block.id }}" class="collection-tab__label">
+              {{ block.settings.button_text | default: collection.title }}
+            </label>
+          </div>
+
+          {% comment %} 2. Панель з товарами цієї колекції (йде одразу після .collection-tab__item) {% endcomment %}
+          <div class="collection-tab__panel">
+            <div class="collection-tab__panel-grid">
+              {% for product in collection.products limit: 8 %}
+                <div class="collection-tab__product-wrapper">
+                  <a href="{{ product.url }}" class="collection-tab__product">
+                    {% if product.featured_image %}
+                      <img
+                        src="{{ product.featured_image | image_url: width: 200 }}"
+                        alt="{{ product.title | escape }}"
+                        width="200"
+                        height="200"
+                        loading="lazy"
+                        class="collection-tab__product-image"
+                      >
+                    {% endif %}
+                    <span class="collection-tab__product-title">{{ product.title }}</span>
+                    <span class="collection-tab__product-price">{{ product.price | money }}</span>
+                  </a>
+                  <product-form class="product-form">
+                    {% form 'product', product, class: 'collection-tab__product-form', data-type: 'add-to-cart-form', novalidate: 'novalidate' %}
+                      <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+                      <button class="button button--primary" type="submit" name="add">
+                        <span>{{ 'products.product.add_to_cart' | t | default: 'Add to cart' }}</span>
+                        {% render 'loading-spinner' %}
+                      </button>
+                    {% endform %}
+                  </product-form>
+                </div>
+              {% endfor %}
+            </div>
+            <a href="{{ collection.url }}" class="collection-tab__view-all button button--secondary">
+              {{ section.settings.tab_view_all | default: 'View all' }}
+              {{ collection.title }}
+            </a>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="collection-tab__empty">{{ section.settings.tab_description }}</p>
+  {% endif %}
+</section>
+
+{% schema %}
+{
+  "name": "Collection Tab",
+  "settings": [
+    {
+      "type": "text",
+      "id": "tab_title",
+      "label": "Tab Title",
+      "default": "Collection Tab"
+    },
+    {
+      "type": "text",
+      "id": "tab_description",
+      "label": "Tab Description",
+      "default": "Add your collections to this tab."
+    },
+    {
+      "type": "text",
+      "id": "tab_view_all",
+      "label": "View all link text",
+      "default": "View all"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "collection",
+      "name": "Collection",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Select Collection"
+        },
+        {
+          "type": "text",
+          "id": "button_text",
+          "label": "Button Text",
+          "default": "View Collection"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 3,
+  "presets": [
+    {
+      "name": "Collection Tab",
+      "category": "Custom"
+    }
+  ]
+}
+{% endschema %}

@@ -1,8 +1,4 @@
-{% comment %}
-  Секція: до 3 товарів з колекції "all", тільки available.
-  Бейдж Sale при compare_at_price > price.
-  Add to cart через AJAX — відкривається cart drawer (потрібен <product-form>).
-{% endcomment %}
+<script src="{{ 'product-form.js' | asset_url }}" defer="defer"></script>
 
 {% assign collection_handle = 'all' %}
 {% assign all_products = collections[collection_handle].products %}
@@ -18,7 +14,11 @@
         <li class="product-available__item">
           <a href="{{ product.url }}" class="product-available__link">
             {% if product.featured_image %}
-              {{ product.featured_image | image_url: width: 300 | image_tag: loading: 'lazy', widths: '150,300', class: 'product-available__image' }}
+              {{
+                product.featured_image
+                | image_url: width: 300
+                | image_tag: loading: 'lazy', widths: '150,300', class: 'product-available__image'
+              }}
             {% endif %}
             <span class="product-available__title-text">{{ product.title }}</span>
             <span class="product-available__price">
@@ -33,24 +33,33 @@
             <span class="product-available__badge badge badge--sale" aria-hidden="true">Sale</span>
           {% endif %}
 
-          {% comment %} product-form — custom element з theme: перехоплює submit, робить fetch /cart/add, оновлює drawer {% endcomment %}
           {% assign product_form_id = 'product-form-' | append: section.id | append: '-' | append: product.id %}
           <product-form class="product-form" data-section-id="{{ section.id }}">
             <div class="product-form__error-message-wrapper" role="alert" hidden>
               <span class="product-form__error-message"></span>
             </div>
-            {% form 'product', product, id: product_form_id, class: 'form', novalidate: 'novalidate', data-type: 'add-to-cart-form' %}
+            {% form 'product',
+              product,
+              id: product_form_id,
+              class: 'form',
+              novalidate: 'novalidate',
+              data-type: 'add-to-cart-form'
+            %}
               <input
                 type="hidden"
                 name="id"
                 value="{{ product.selected_or_first_available_variant.id }}"
-                {% if product.selected_or_first_available_variant.available == false %}disabled{% endif %}
+                {% if product.selected_or_first_available_variant.available == false %}
+                  disabled
+                {% endif %}
               >
               <button
                 type="submit"
                 name="add"
                 class="product-form__submit button button--primary"
-                {% if product.selected_or_first_available_variant.available == false %}disabled{% endif %}
+                {% if product.selected_or_first_available_variant.available == false %}
+                  disabled
+                {% endif %}
               >
                 <span>{{ 'products.product.add_to_cart' | t }}</span>
                 {% render 'loading-spinner' %}

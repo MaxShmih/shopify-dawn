@@ -1,0 +1,30 @@
+.collections-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+.collection-item {
+  min-width: 0; /* щоб контент не роздував колонку */
+}
+.collection-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+.collection-link {
+  text-decoration: none;
+  color: #000;
+  transition: color 0.3s ease;
+}
+.collection-link:hover {
+  color: green;
+}
+
+@media (width <= 989px) {
+  .collections-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .featured-collections-custom__image {
+    width: 100%;
+  }
+}
